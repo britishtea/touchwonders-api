@@ -7,9 +7,13 @@ require "models"
 require "digest/sha1"
 require "json"
 require "validators/image"
+require "uploader"
 
 class API < Sinatra::Base
-  configure { set :environment, "development" }
+  configure {
+    set :environment, "development"
+  }
+  
   helpers do
     def require_authentication!
     end
@@ -22,21 +26,16 @@ class API < Sinatra::Base
       end
     end
 
-    def valid_image?(image)
-      image[:type] == "image/png" || image[:type] == "image/jpg"
-    end
-
-    def process_image!(image)
+    def process_image!(image, file_name)
+      Uploader.upload!(image, file_name)
     end
   end
 
   post "/image" do
     require_authentication!
 
-    validator = Validators::Image.new(
-      title: params["title"],
-      image: params.fetch("image", {})[:tempfile],
-    )
+    image_file = params.fetch("image", {})[:tempfile]
+    validator  = Validators::Image.new(title: params["title"], image: image_file)
 
     unless validator.valid?
       halt 400, {
@@ -56,9 +55,11 @@ class API < Sinatra::Base
         image.add_tag tag
       end
 
+      process_image!(image_file, image.file_hash)
+
       status  201
       headers "Location" => url("/image/#{image.id}")
-    rescue Sequel::ValidationFailed => exception
+    rescue Sequel::ValidationFailed
       halt 400, { "error" => { "messages" => ["image: duplicate"] } }.to_json
     end
   end
