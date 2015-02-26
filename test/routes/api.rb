@@ -108,8 +108,8 @@ test "existing image" do
   assert_equal "title", response["title"]
   assert_equal "jip", response["author"]
   assert_equal ["cat"], response["tags"]
-  assert response["thumbnail"].end_with?("/images/hash_thumb")
-  assert response["full_size"].end_with?("/images/hash_full")
+  assert response["thumb"].end_with?("/thumb/hash")
+  assert response["full"].end_with?("/full/hash")
 end
 
 

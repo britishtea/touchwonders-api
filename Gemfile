@@ -5,8 +5,8 @@ gem "pg", "~> 0.18"
 gem "shield", "~> 2.1"
 gem "sinatra", :git => 'git@github.com:sinatra/sinatra.git'
 gem "scrivener", "~> 0.4"
-gem "fog", "~> 1.28"
 gem "mini_magick", "~> 4.1"
+gem "aws-s3", "~> 0.6"
 
 group :development do
   gem "cutest", "~> 1.2"

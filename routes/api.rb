@@ -1,18 +1,29 @@
 require "bundler/setup"
 require "sinatra"
-require "sequel"
-require "pg"
-require "db"
-require "models"
-require "digest/sha1"
+require "aws/s3"
 require "json"
+
 require "validators/image"
-require "uploader"
+require "resizer"
+
+class ImageFile < AWS::S3::S3Object
+  set_current_bucket_to "touchwonders-jip"
+end
 
 class API < Sinatra::Base
-  configure {
-    set :environment, "development"
-  }
+  configure do
+    set :environment, ENV.fetch("ENVIRONEMNT", "development")
+
+    require "db"
+    require "models"
+
+    AWS::S3::Base.establish_connection!(
+      :access_key_id     => "123", 
+      :secret_access_key => "abc",
+      :server            => "0.0.0.0",
+      :port              => 4567,
+    )
+  end
   
   helpers do
     def require_authentication!
@@ -26,8 +37,11 @@ class API < Sinatra::Base
       end
     end
 
-    def process_image!(image, file_name)
-      Uploader.upload!(image, file_name)
+    def process_image!(image, name)  
+      resizer = Resizer.new(image)
+
+      ImageFile.store("#{name}_thumb", resizer.thumb, access: :public_read)
+      ImageFile.store("#{name}_full", resizer.full, access: :public_read)
     end
   end
 
@@ -75,12 +89,12 @@ class API < Sinatra::Base
     
     {
       "response" => {
-        :id        => image.id,
-        :title     => image.title,
-        :author    => image.author.name,
-        :thumbnail => url("/images/#{image.file_hash}_thumb"),
-        :full_size => url("/images/#{image.file_hash}_full"),
-        :tags      => image.tags.map(&:name),
+        :id     => image.id,
+        :title  => image.title,
+        :author => image.author.name,
+        :thumb  => url("/thumb/#{image.file_hash}"),
+        :full   => url("/full/#{image.file_hash}"),
+        :tags   => image.tags.map(&:name),
       }
     }.to_json
   end

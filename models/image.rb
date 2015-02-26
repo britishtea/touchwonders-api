@@ -1,3 +1,5 @@
+require "digest/sha1"
+
 class Image < Sequel::Model
   many_to_one  :author
   many_to_many :tags
@@ -5,7 +7,7 @@ class Image < Sequel::Model
   plugin :validation_helpers
 
   def image=(file)
-    self.file_hash = Digest::SHA1.hexdigest(file.read)
+    self.file_hash = ::Digest::SHA1.hexdigest(file.read)
   end
 
   def validate
