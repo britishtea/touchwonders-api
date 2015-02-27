@@ -79,6 +79,11 @@ test "valid image" do
 
   assert_equal 201, last_response.status
   assert last_response["Location"]
+
+  image = Image[:title => "title"]
+
+  assert image
+  assert_equal ["cat"], image.tags.map(&:name)
 end
 
 
@@ -132,6 +137,8 @@ test "existing image" do
   put "/image/1", "title" => "new title", "tag[]" => "new tag"
 
   assert_equal 204, last_response.status
+  assert_equal "new title", Image[1].title
+  assert Image[1].tags.find { |tag| tag.name == "new tag" }
 end
 
 
@@ -154,4 +161,5 @@ test "existing image" do
   delete "/image/1"
 
   assert_equal 204, last_response.status
+  assert_equal nil, Image[1]
 end
