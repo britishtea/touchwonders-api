@@ -13,20 +13,35 @@ end
 class API < Sinatra::Base
   configure do
     set :environment, ENV.fetch("ENVIRONMENT", "development")
+    set :method_override, true
+    set :aws_key,     ENV.fetch("AWS_KEY")
+    set :aws_secret,  ENV.fetch("AWS_SECRET")
+    set :aws_server,  ENV["AWS_SERVER"] || "localhost"
+    set :aws_port,    ENV["AWS_PORT"] || 4567
 
     require "db"
     require "models"
+  end
 
+  configure :development do
     AWS::S3::Base.establish_connection!(
-      :access_key_id     => "123", 
-      :secret_access_key => "abc",
-      :server            => "0.0.0.0",
-      :port              => 4567,
+      :access_key_id     => settings.aws_key, 
+      :secret_access_key => settings.aws_secret,
+      :server            => settings.aws_server,
+      :port              => settings.aws_port,
+    )
+  end
+
+  configure :production do
+    AWS::S3::Base.establish_connection!(
+      :access_key_id     => settings.aws_key, 
+      :secret_access_key => settings.aws_secret,
     )
   end
   
   helpers do
     def require_authentication!
+
     end
 
     def require_fields(params, *fields, &error)
@@ -112,9 +127,10 @@ class API < Sinatra::Base
 
     begin
       image.title = params["title"]
+      image.remove_all_tags
 
       params["tag"].each do |tag|
-        image.add_tag Tag.find_or_create(:name => tag)
+        image.add_tag Tag.find_or_create(:name => tag) unless tag.empty?
       end
 
       image.save
@@ -146,6 +162,14 @@ class API < Sinatra::Base
     end
 
     status 204
+  end
+
+  get "/thumb/:hash" do |hash|
+    redirect ImageFile.url_for("#{hash}_thumb", authenticated: false)
+  end
+
+  get "/full/:hash" do |hash|
+    redirect ImageFile.url_for("#{hash}_full", authenticated: false)  
   end
 
   error do |e|

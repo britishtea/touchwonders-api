@@ -29,8 +29,8 @@ module Validators
         return false
       end
 
-      jfif = Regexp.new("^(\xE0|\xE1)..JFIF\x00".force_encoding("BINARY"))
-      exif = Regexp.new("^(\xE0|\xE1)..EXIF".force_encoding("BINARY"))
+      jfif = Regexp.new("^(\xE0|\xE1)..JFIF\x00".force_encoding("BINARY"), Regexp::IGNORECASE)
+      exif = Regexp.new("^(\xE0|\xE1)..EXIF".force_encoding("BINARY"), Regexp::IGNORECASE)
 
       jfif =~ header[3..-1] || exif =~ header[3..-1]
     end
