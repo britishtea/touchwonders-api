@@ -29,6 +29,7 @@ class Resizer
     end
 
     image.write(out)
+    out.rewind
 
     return out.close_write
   end

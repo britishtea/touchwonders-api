@@ -12,7 +12,7 @@ end
 
 class API < Sinatra::Base
   configure do
-    set :environment, ENV.fetch("ENVIRONEMNT", "development")
+    set :environment, ENV.fetch("ENVIRONMENT", "development")
 
     require "db"
     require "models"
@@ -75,6 +75,8 @@ class API < Sinatra::Base
       headers "Location" => url("/image/#{image.id}")
     rescue Sequel::ValidationFailed
       halt 400, { "error" => { "messages" => ["image: duplicate"] } }.to_json
+    rescue 
+      halt 500
     end
   end
 
@@ -108,6 +110,18 @@ class API < Sinatra::Base
       halt 404, { "error" => { "message" => "image does not exist" } }.to_json
     end
 
+    begin
+      image.title = params["title"]
+
+      params["tag"].each do |tag|
+        image.add_tag Tag.find_or_create(:name => tag)
+      end
+
+      image.save
+    rescue
+      halt 500
+    end
+
     status  204
     headers "Last-Modified" => image.updated_at.to_s
   end
@@ -121,8 +135,15 @@ class API < Sinatra::Base
       halt 404, { "error" => { "message" => "image does not exist" } }.to_json
     end
 
-    image.remove_all_tags
-    image.destroy
+    begin
+      ImageFile.delete("#{image.file_hash}_thumb")
+      ImageFile.delete("#{image.file_hash}_full")
+
+      image.remove_all_tags
+      image.destroy
+    rescue 
+      halt 500
+    end
 
     status 204
   end
