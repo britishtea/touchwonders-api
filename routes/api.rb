@@ -88,10 +88,12 @@ class API < Sinatra::Base
 
       status  201
       headers "Location" => url("/image/#{image.id}")
+      
+      { "response" => { "id" => image.id } }.to_json
     rescue Sequel::ValidationFailed
       halt 400, { "error" => { "messages" => ["image: duplicate"] } }.to_json
     rescue 
-      halt 500
+      error 500
     end
   end
 
@@ -99,19 +101,19 @@ class API < Sinatra::Base
     image = Image[id]
 
     if image.nil?
-      halt 404, { "error" => { "message" => "image does not exist" } }.to_json
+      halt 404, { "error" => { "messages" => ["image does not exist"] } }.to_json
     end
 
     headers "Last-Modified" => image.updated_at.to_s
     
     {
       "response" => {
-        :id     => image.id,
-        :title  => image.title,
-        :author => image.author.name,
-        :thumb  => url("/thumb/#{image.file_hash}"),
-        :full   => url("/full/#{image.file_hash}"),
-        :tags   => image.tags.map(&:name),
+        "id"     => image.id,
+        "title"  => image.title,
+        "author" => image.author ? image.author.name : nil,
+        "thumb"  => url("/thumb/#{image.file_hash}"),
+        "full"   => url("/full/#{image.file_hash}"),
+        "tags"   => image.tags.map(&:name),
       }
     }.to_json
   end
@@ -122,7 +124,7 @@ class API < Sinatra::Base
     image = Image[id]
 
     if image.nil?
-      halt 404, { "error" => { "message" => "image does not exist" } }.to_json
+      halt 404, { "error" => { "messages" => ["image does not exist"] } }.to_json
     end
 
     begin
@@ -135,7 +137,7 @@ class API < Sinatra::Base
 
       image.save
     rescue
-      halt 500
+      error 500
     end
 
     status  204
@@ -148,7 +150,7 @@ class API < Sinatra::Base
     image = Image[id]
 
     if image.nil?
-      halt 404, { "error" => { "message" => "image does not exist" } }.to_json
+      halt 404, { "error" => { "messages" => ["image does not exist"] } }.to_json
     end
 
     begin
@@ -158,21 +160,23 @@ class API < Sinatra::Base
       image.remove_all_tags
       image.destroy
     rescue 
-      halt 500
+      error 500
     end
 
     status 204
   end
 
   get "/thumb/:hash" do |hash|
-    redirect ImageFile.url_for("#{hash}_thumb", authenticated: false)
+    status  301
+    headers "Location" => ImageFile.url_for("#{hash}_thumb", authenticated: false)
   end
 
   get "/full/:hash" do |hash|
-    redirect ImageFile.url_for("#{hash}_full", authenticated: false)  
+    status 301
+    headers "Location" => ImageFile.url_for("#{hash}_full", authenticated: false)  
   end
 
   error do |e|
-    puts e, e.backtrace.first(10)
+    { "error" => { "messages" => ["server error"] } }.to_json
   end
 end

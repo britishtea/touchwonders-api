@@ -77,7 +77,7 @@ test "non-existing image" do
 
   expected = {
     "error" => {
-      "message" => "image does not exist"
+      "messages" => ["image does not exist"]
     }
   }
 
@@ -108,7 +108,7 @@ test "non-existing image" do
 
   expected = {
     "error" => {
-      "message" => "image does not exist"
+      "messages" => ["image does not exist"]
     }
   }
 
@@ -132,7 +132,7 @@ test "non-existing image" do
 
   expected = {
     "error" => {
-      "message" => "image does not exist"
+      "messages" => ["image does not exist"]
     }
   }
 
