@@ -5,7 +5,7 @@ class Author < Sequel::Model
 
   one_to_many :images
 
-  def fetch(name)
-    filter(:name => name)
+  def self.fetch(name)
+    find(:name => name)
   end
 end

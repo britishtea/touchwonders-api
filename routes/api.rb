@@ -197,6 +197,15 @@ class API < Sinatra::Base
 
     { "response" => images }.to_json
   end
+  get "/api_key" do
+    author = Author.authenticate(params["name"], params["password"])
+
+    if author.nil?
+      error 401, { "error" => { "messages" => ["invalid credentials"] } }.to_json
+    end
+
+    { "response" => { "api_key" => author.api_key } }.to_json
+  end
 
   error do |e|
     puts e, e.backtrace
