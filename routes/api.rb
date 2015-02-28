@@ -171,6 +171,33 @@ class API < Sinatra::Base
     headers "Location" => ImageFile.url_for("#{hash}_full", authenticated: false)  
   end
 
+  get "/images" do
+    if params.key?("tag")
+      tag = Tag[:name => params["tag"]]
+
+      if tag.nil?
+        images = []
+      else
+        images = tag.images_dataset.order(:created_at).last(25)
+      end
+    else
+      images = Image.order(:created_at).last(25)
+    end
+
+    images = images.map do |image|
+      {
+        "id"     => image.id,
+        "title"  => image.title,
+        "author" => image.author ? image.author.name : nil,
+        "thumb"  => url("/thumb/#{image.file_hash}"),
+        "full"   => url("/full/#{image.file_hash}"),
+        "tags"   => image.tags.map(&:name),
+      }
+    end
+
+    { "response" => images }.to_json
+  end
+
   error do |e|
     { "error" => { "messages" => ["server error"] } }.to_json
   end
