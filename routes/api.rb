@@ -41,7 +41,11 @@ class API < Sinatra::Base
   
   helpers do
     def require_authentication!
+      author = Author[:api_key => params["api_key"]]
 
+      if author.nil?
+        halt 401, { "error" => { "messages" => ["invalid api_key"] } }.to_json
+      end
     end
 
     def process_image!(image, name)  
@@ -79,7 +83,8 @@ class API < Sinatra::Base
     end
 
     begin
-      image = Image.create(validator.attributes)
+      image        = Image.create(validator.attributes)
+      image.author = Author[:api_key => params[:api_key]]
 
       params[:tag].each do |name|
         tag = Tag.find_or_create(name: name)

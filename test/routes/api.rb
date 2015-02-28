@@ -9,8 +9,17 @@ end
 
 # CREATE
 
-test "missing fields" do
+test "unauthenticated" do
   post "/image", {}
+
+  expected = { "error" => { "messages" => ["invalid api_key"] } }
+
+  assert_equal 401, last_response.status
+  assert_equal expected, JSON.parse(last_response.body)
+end
+
+test "missing fields" do
+  post "/image", { "api_key" => "123456" }
 
   expected = {
     "error" => {
@@ -23,7 +32,8 @@ test "missing fields" do
 end
 
 test "invalid image" do
-  post "/image", "title" => "title", 
+  post "/image", "api_key" => "123456",
+                 "title" => "title", 
                  "tag[]" => "cat",
                  "image" => file("gif.gif", "image/gif")
 
@@ -38,10 +48,12 @@ test "invalid image" do
 end
 
 test "duplicate image" do
-  post "/image", "title" => "title",
+  post "/image", "api_key" => "123456",
+                 "title" => "title",
                  "tag[]" => "cat",
                  "image" => file("duplicate.jpg", "image/jpg")
-  post "/image", "title" => "title",
+  post "/image", "api_key" => "123456",
+                 "title" => "title",
                  "tag[]" => "cat",
                  "image" => file("duplicate.jpg", "image/jpg")
 
@@ -56,7 +68,8 @@ test "duplicate image" do
 end
 
 test "valid image" do
-  post "/image", "title" => "title",
+  post "/image", "api_key" => "123456",
+                 "title" => "title",
                  "tag[]" => "cat",
                  "image" => file("jpeg.jpg", "image/jpg")
 
@@ -103,8 +116,19 @@ end
 
 # UPDATE
 
+test "unauthenticated" do
+  put "/image/1", {}
+
+  expected = { "error" => { "messages" => ["invalid api_key"] } }
+
+  assert_equal 401, last_response.status
+  assert_equal expected, JSON.parse(last_response.body)
+end
+
 test "non-existing image" do
-  put "/image/xxx", "title" => "new title", "tag[]" => "new tag"
+  put "/image/xxx", "api_key" => "123456",
+                    "title" => "new title",
+                    "tag[]" => "new tag"
 
   expected = {
     "error" => {
@@ -117,7 +141,9 @@ test "non-existing image" do
 end
 
 test "existing image" do
-  put "/image/1", "title" => "new title", "tag[]" => "new tag"
+  put "/image/1", "api_key" => "123456",
+                  "title" => "new title",
+                  "tag[]" => "new tag"
 
   assert_equal 204, last_response.status
   assert_equal "new title", Image[1].title
@@ -127,8 +153,17 @@ end
 
 # DELETE
 
+test "unauthenticated" do
+  delete "/image/1", {}
+
+  expected = { "error" => { "messages" => ["invalid api_key"] } }
+
+  assert_equal 401, last_response.status
+  assert_equal expected, JSON.parse(last_response.body)
+end
+
 test "non-existing image" do
-  delete "/image/xxx"
+  delete "/image/xxx", { "api_key" => "123456" }
 
   expected = {
     "error" => {
@@ -141,7 +176,7 @@ test "non-existing image" do
 end
 
 test "existing image" do
-  delete "/image/1"
+  delete "/image/1", "api_key" => "123456"
 
   assert_equal 204, last_response.status
   assert_equal nil, Image[1]
