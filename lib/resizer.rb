@@ -20,13 +20,13 @@ class Resizer
     image = MiniMagick::Image.read(file)
     out   = StringIO.new ""
 
-    image.resize "#{width}x#{height}^"
-
     if image.width > image.height
-      image.shave "#{(image.width - image.height) / 2}"
+      image.shave "#{(image.width - image.height) / 2}x0"
     elsif image.height > image.width
-      image.shave "x#{(image.height - image.width) / 2}"
+      image.shave "0x#{(image.height - image.width) / 2}"
     end
+
+    image.resize "#{width}x#{height}!"
 
     image.write(out)
     out.rewind
