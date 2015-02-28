@@ -64,6 +64,13 @@ class API < Sinatra::Base
 
       return image
     end
+
+    def log_exception!
+      exception = env['sinatra.error']
+
+      logger.debug e
+      logger.debug e.backtrace
+    end
   end
 
   post "/image" do
@@ -99,8 +106,6 @@ class API < Sinatra::Base
       { "response" => { "id" => image.id } }.to_json
     rescue Sequel::ValidationFailed
       halt 400, { "error" => { "messages" => ["image: duplicate"] } }.to_json
-    rescue 
-      error 500
     end
   end
 
@@ -126,18 +131,14 @@ class API < Sinatra::Base
 
     image = fetch_image(id)
 
-    begin
-      image.title = params["title"]
-      image.remove_all_tags
+    image.title = params["title"]
+    image.remove_all_tags
 
-      params["tag"].each do |tag|
-        image.add_tag Tag.find_or_create(:name => tag) unless tag.empty?
-      end
-
-      image.save
-    rescue
-      error 500
+    params["tag"].each do |tag|
+      image.add_tag Tag.find_or_create(:name => tag) unless tag.empty?
     end
+
+    image.save
 
     status  204
     headers "Last-Modified" => image.updated_at.to_s
@@ -148,15 +149,11 @@ class API < Sinatra::Base
 
     image = fetch_image(id)
 
-    begin
-      ImageFile.delete("#{image.file_hash}_thumb")
-      ImageFile.delete("#{image.file_hash}_full")
+    ImageFile.delete("#{image.file_hash}_thumb")
+    ImageFile.delete("#{image.file_hash}_full")
 
-      image.remove_all_tags
-      image.destroy
-    rescue 
-      error 500
-    end
+    image.remove_all_tags
+    image.destroy
 
     status 204
   end
@@ -207,8 +204,17 @@ class API < Sinatra::Base
     { "response" => { "api_key" => author.api_key } }.to_json
   end
 
-  error do |e|
-    puts e, e.backtrace
-    { "error" => { "messages" => ["server error"] } }.to_json
+  error Sequel::Error do
+    log_exception!
+
+    status 504
+    { "error" => { "messages" => ["database error"] } }.to_json
+  end
+
+  error AWS::S3::S3Exception do
+    log_exception!
+
+    status 504
+    { "error" => { "messages" => ["storage error"] } }.to_json
   end
 end
