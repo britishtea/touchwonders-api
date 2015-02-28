@@ -18,8 +18,8 @@ class API < Sinatra::Base
     AWS::S3::Base.establish_connection!(
       :access_key_id     => ENV.fetch("AWS_ACCESS_KEY_ID"), 
       :secret_access_key => ENV.fetch("AWS_SECRET_ACCESS_KEY"),
-      :server            => ENV.fetch("AWS_SERVER", nil),
-      :port              => ENV.fetch("AWS_PORT", nil),
+      :server            => ENV.fetch("AWS_SERVER"),
+      :port              => ENV.fetch("AWS_PORT").to_i,
     )
 
     require "db"
@@ -162,10 +162,10 @@ class API < Sinatra::Base
       if tag.nil?
         images = []
       else
-        images = tag.images_dataset.order(:created_at).last(25)
+        images = tag.images_dataset.order(Sequel.desc(:created_at))
       end
     else
-      images = Image.order(:created_at).last(25)
+      images = Image.order(Sequel.desc(:created_at))
     end
 
     images = images.map do |image|
