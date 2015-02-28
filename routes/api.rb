@@ -44,19 +44,21 @@ class API < Sinatra::Base
 
     end
 
-    def require_fields(params, *fields, &error)
-      missing = fields.reject { |field| params.key?(field) }
-
-      unless missing.empty?
-        yield(missing)
-      end
-    end
-
     def process_image!(image, name)  
       resizer = Resizer.new(image)
 
       ImageFile.store("#{name}_thumb", resizer.thumb, access: :public_read)
       ImageFile.store("#{name}_full", resizer.full, access: :public_read)
+    end
+
+    def fetch_image(id)
+      image = Image[id]
+
+      if image.nil?
+        halt 404, { "error" => { "messages" => ["image does not exist"] } }.to_json
+      end
+
+      return image
     end
   end
 
@@ -98,11 +100,7 @@ class API < Sinatra::Base
   end
 
   get "/image/:id" do |id|
-    image = Image[id]
-
-    if image.nil?
-      halt 404, { "error" => { "messages" => ["image does not exist"] } }.to_json
-    end
+    image = fetch_image(id)
 
     headers "Last-Modified" => image.updated_at.to_s
     
@@ -121,11 +119,7 @@ class API < Sinatra::Base
   put "/image/:id" do |id|
     require_authentication!
 
-    image = Image[id]
-
-    if image.nil?
-      halt 404, { "error" => { "messages" => ["image does not exist"] } }.to_json
-    end
+    image = fetch_image(id)
 
     begin
       image.title = params["title"]
@@ -147,11 +141,7 @@ class API < Sinatra::Base
   delete "/image/:id" do |id|
     require_authentication!
 
-    image = Image[id]
-
-    if image.nil?
-      halt 404, { "error" => { "messages" => ["image does not exist"] } }.to_json
-    end
+    image = fetch_image(id)
 
     begin
       ImageFile.delete("#{image.file_hash}_thumb")
