@@ -14,4 +14,5 @@ group :development do
   gem "sqlite3", "~> 1.3"
   gem "shotgun"
   gem "pry"
+  gem "dotenv"
 end

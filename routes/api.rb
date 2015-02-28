@@ -7,38 +7,25 @@ require "validators/image"
 require "resizer"
 
 class ImageFile < AWS::S3::S3Object
-  set_current_bucket_to "touchwonders-jip"
+  set_current_bucket_to ENV.fetch("AWS_BUCKET_NAME")
 end
 
 class API < Sinatra::Base
   configure do
     set :environment, ENV.fetch("ENVIRONMENT", "development")
     set :method_override, true
-    set :aws_key,     ENV.fetch("AWS_KEY")
-    set :aws_secret,  ENV.fetch("AWS_SECRET")
-    set :aws_server,  ENV["AWS_SERVER"] || "localhost"
-    set :aws_port,    ENV["AWS_PORT"] || 4567
+
+    AWS::S3::Base.establish_connection!(
+      :access_key_id     => ENV.fetch("AWS_ACCESS_KEY_ID"), 
+      :secret_access_key => ENV.fetch("AWS_SECRET_ACCESS_KEY"),
+      :server            => ENV.fetch("AWS_SERVER", nil),
+      :port              => ENV.fetch("AWS_PORT", nil),
+    )
 
     require "db"
     require "models"
   end
 
-  configure :development do
-    AWS::S3::Base.establish_connection!(
-      :access_key_id     => settings.aws_key, 
-      :secret_access_key => settings.aws_secret,
-      :server            => settings.aws_server,
-      :port              => settings.aws_port,
-    )
-  end
-
-  configure :production do
-    AWS::S3::Base.establish_connection!(
-      :access_key_id     => settings.aws_key, 
-      :secret_access_key => settings.aws_secret,
-    )
-  end
-  
   helpers do
     def require_authentication!
       author = Author[:api_key => params["api_key"]]
@@ -194,6 +181,7 @@ class API < Sinatra::Base
 
     { "response" => images }.to_json
   end
+
   get "/api_key" do
     author = Author.authenticate(params["name"], params["password"])
 
