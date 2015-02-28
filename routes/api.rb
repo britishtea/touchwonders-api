@@ -81,8 +81,8 @@ class API < Sinatra::Base
       image.author = Author[:api_key => params[:api_key]]
 
       params[:tag].each do |name|
-        tag = Tag.find_or_create(name: name)
-        image.add_tag tag
+        next if name.empty?
+        image.add_tag Tag.find_or_create(:name => name)
       end
 
       process_image!(image_file, image.file_hash)
