@@ -2,7 +2,7 @@ require_relative "api_helper"
 require "db"
 
 def file(file_name, type)
-  file = File.new(File.expand_path("../#{file_name}", __FILE__))
+  file = File.new(File.expand_path("../data/#{file_name}", __FILE__))
 
   Rack::Test::UploadedFile.new(file, type)
 end

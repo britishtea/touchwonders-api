@@ -199,6 +199,7 @@ class API < Sinatra::Base
   end
 
   error do |e|
+    puts e, e.backtrace
     { "error" => { "messages" => ["server error"] } }.to_json
   end
 end
