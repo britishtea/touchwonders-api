@@ -55,8 +55,8 @@ class API < Sinatra::Base
     def log_exception!
       exception = env['sinatra.error']
 
-      logger.debug e
-      logger.debug e.backtrace
+      logger.debug exception
+      logger.debug exception.backtrace
     end
   end
 
