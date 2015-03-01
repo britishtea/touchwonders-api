@@ -7,7 +7,7 @@ gem "sinatra"
 gem "scrivener", "~> 0.4"
 gem "mini_magick", "~> 4.1"
 gem "aws-s3", "~> 0.6"
-gem "fakes3"
+gem "sucker_punch"
 
 group :development do
   gem "cutest", "~> 1.2"
