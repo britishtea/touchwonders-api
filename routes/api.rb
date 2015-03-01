@@ -214,4 +214,9 @@ class API < Sinatra::Base
     status 504
     { "error" => { "messages" => ["storage error"] } }.to_json
   end
+
+  error do
+    log_exception!
+    { "error" => { "messags" => ["internal server error"] } }.to_json
+  end
 end
