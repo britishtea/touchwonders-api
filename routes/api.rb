@@ -118,7 +118,10 @@ class API < Sinatra::Base
 
     image = fetch_image(id)
 
-    image.title = params["title"]
+    unless params["title"].empty?
+      image.title = params["title"]
+    end
+    
     image.remove_all_tags
 
     params["tag"].each do |tag|
