@@ -63,6 +63,12 @@ class API < Sinatra::Base
   post "/image" do
     require_authentication!
 
+    image = params.fetch("image", {})
+
+    if image.empty?
+      error 400, { "error" => { "messages" => ["image: not_present"] } }.to_json
+    end
+
     image_file = params.fetch("image", {})[:tempfile]
     validator  = Validators::Image.new(title: params["title"], image: image_file)
 
