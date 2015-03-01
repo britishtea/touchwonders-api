@@ -166,7 +166,7 @@ class API < Sinatra::Base
 
   get "/images" do
     if params.key?("tag")
-      tag = Tag[:name => Sequel.ilike(params["tag"])]
+      tag = Tag.find(Sequel.ilike(:name, params["tag"]))
 
       if tag.nil?
         images = []
