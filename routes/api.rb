@@ -121,7 +121,7 @@ class API < Sinatra::Base
     unless params["title"].empty?
       image.title = params["title"]
     end
-    
+
     image.remove_all_tags
 
     params["tag"].each do |tag|
@@ -160,7 +160,7 @@ class API < Sinatra::Base
 
   get "/images" do
     if params.key?("tag")
-      tag = Tag[:name => params["tag"]]
+      tag = Tag[:name => Sequel.ilike(params["tag"])]
 
       if tag.nil?
         images = []
